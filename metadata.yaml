@@ -1,4 +1,6 @@
 homepage: "https://www.audienceproject.com"
 versions:
+  - sha: 4d66b80a654ced912fbab15016466bfed0af798d
+    changeNotes: Add key/values mapping and improve TCF compatibility
   - sha: 9df065f21aeca6f246e6fb0f500204aec0767909
     changeNotes: Initial release
