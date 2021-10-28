@@ -10,7 +10,7 @@ ___INFO___
 
 {
   "type": "TAG",
-  "id": "audienceproject_data_to_datalayer",
+  "id": "cvt_temp_public_id",
   "version": 1,
   "securityGroups": [],
   "displayName": "AudienceProject Data to dataLayer",
@@ -39,12 +39,6 @@ ___TEMPLATE_PARAMETERS___
     "help": "Your AudienceProject customer ID.",
     "simpleValueType": true,
     "valueValidators": [
-      {
-        "type": "STRING_LENGTH",
-        "args": [
-          2
-        ]
-      },
       {
         "type": "NON_EMPTY"
       }
