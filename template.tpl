@@ -71,16 +71,17 @@ ___TEMPLATE_PARAMETERS___
     "type": "TEXT",
     "name": "audiencesKeyValueMapping",
     "displayName": "Audiences Key/Value Mapping JSON",
-    "help": "Your mapping for converting AudienceProject audiences into additional key/value params.",
+    "help": "Your mapping-object for converting AudienceProject audiences into additional data key/value params. Audiences with matches in object values will become data keys with `ap_` prefix.",
     "simpleValueType": true,
-    "valueValidators": [
-      {
-        "type": "REGEX",
-        "args": [
-          "^{.*}$"
-        ]
-      }
-    ]
+    "valueHint": "{ \"%newKey%\": [ %audienceId% ] }"
+  },
+  {
+    "type": "TEXT",
+    "name": "dataKeyValueMerge",
+    "displayName": "Data Key/Value Merge JSON",
+    "help": "Your mapping-object for merging multiple keys into single one, handy when you need to use less keys. For instance, you need to join “ap_gen“ and “ap_age” into one key named “ap_demo”, then use { \"ap_demo\": [\"ap_gen\", \"ap_age\"] } as mapping. Value of new key \"ap_demo\" will be [ \"ap_gen:1\", \"ap_gen:2\", \"ap_age:1\", \"ap_age:2\"].",
+    "simpleValueType": true,
+    "valueHint": "{ \"%newKey%\": [ \"%existingKey%\" ] }"
   }
 ]
 
@@ -108,6 +109,9 @@ logToConsole('Wait for explicit consent from user is ' + (data.waitForCmpConsent
 
 const audiencesKeyValueMapping = data.audiencesKeyValueMapping ? JSON.parse(data.audiencesKeyValueMapping) : {};
 logToConsole('Audiences Key/Value Mapping JSON is “' + JSON.stringify(audiencesKeyValueMapping) + '”');
+
+const dataKeyValueMerge = data.dataKeyValueMerge ? JSON.parse(data.dataKeyValueMerge) : {};
+logToConsole('Data Key/Value Merge JSON is “' + JSON.stringify(dataKeyValueMerge) + '”');
 
 let allowStorageAccess = true;
 let allowPersonalization = true;
@@ -210,6 +214,20 @@ const getScriptUrl = () => {
   return url;
 };
 
+const getMappingIndex = (mapping) => Object.keys(mapping).reduce((memo, key) => {
+  const value = mapping[key];
+
+  if (getType(value) === 'array') {
+      value.forEach((item) => {
+        memo[item] = key;
+      });
+  } else {
+    memo[value] = key;
+  }
+
+  return memo;
+}, {});
+
 const getAudienceProjectData = () => {
   const apDataKeyValues = copyFromWindow('apDataKeyValues') || {};
   logToConsole('AudienceProject Data Key/Values:', apDataKeyValues);
@@ -223,14 +241,9 @@ const getAudienceProjectData = () => {
     data[key] = apDataKeyValues[key];
   });
 
-  const audiencesKeyValueMappingIndex = Object.keys(audiencesKeyValueMapping).reduce((memo, key) => {
-    audiencesKeyValueMapping[key].forEach(value => {
-      memo[value] = key;
-    });
-    return memo;
-  }, {});
+  const audiencesKeyValueMappingIndex = getMappingIndex(audiencesKeyValueMapping);
 
-  apDataAudiences.forEach(value => {
+  apDataAudiences.forEach((value) => {
     const key = 'ap_' + (audiencesKeyValueMappingIndex[value] || 'x');
     const valueFixed = makeString(value);
 
@@ -244,6 +257,26 @@ const getAudienceProjectData = () => {
       data[key].push(valueFixed);
     }
   });
+
+  const dataKeyValueMergeIndex = getMappingIndex(dataKeyValueMerge);
+
+  Object.keys(data).forEach((key) => {
+    const newKey = dataKeyValueMergeIndex[key];
+
+    if (newKey) {
+      const newValue = key + ':' + data[key];
+
+      if (getType(data[newKey]) === 'array') {
+        data[newKey].push(newValue);
+      } else {
+        data[newKey] = [newValue];
+      }
+
+      Object.delete(data, key);
+    }
+  });
+
+  logToConsole('AudienceProject Data Key/Values after all transformations:', data);
 
   return data;
 };
