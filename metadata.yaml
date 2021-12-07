@@ -1,5 +1,7 @@
 homepage: "https://www.audienceproject.com"
 versions:
+  - sha: 906d8fe7912827574607a8ba9a31f21dedecfb79
+    changeNotes: Add data mapping
   - sha: 72a48c66ad2ab2d089a0d36ab73387b8a3eed585
     changeNotes: Fix template preview
   - sha: 4d66b80a654ced912fbab15016466bfed0af798d
